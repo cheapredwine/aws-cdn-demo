@@ -29,8 +29,15 @@ management, run the import once:
 ```bash
 cd terraform
 terraform init
-TF_VAR_github_access_token=<token> terraform plan   # preview — should show imports, no changes
-TF_VAR_github_access_token=<token> terraform apply  # import into state
+TF_VAR_github_access_token=<token> \
+TF_VAR_multicdn_demo_secret=<secret> \
+TF_VAR_cloudflare_verify_token=<token> \
+terraform plan   # preview — should show imports, no changes
+
+TF_VAR_github_access_token=<token> \
+TF_VAR_multicdn_demo_secret=<secret> \
+TF_VAR_cloudflare_verify_token=<token> \
+terraform apply  # import into state
 ```
 
 After a clean import the plan should show **no changes**. You can then remove
@@ -44,7 +51,10 @@ Destroys all managed resources. DNS will stop resolving, the site goes dark.
 
 ```bash
 cd terraform
-TF_VAR_github_access_token=<token> terraform destroy
+TF_VAR_github_access_token=<token> \
+TF_VAR_multicdn_demo_secret=<secret> \
+TF_VAR_cloudflare_verify_token=<token> \
+terraform destroy
 ```
 
 Terraform will print a list of everything it will delete and ask for
@@ -64,7 +74,10 @@ Recreates everything from scratch.
 
 ```bash
 cd terraform
-TF_VAR_github_access_token=<token> terraform apply
+TF_VAR_github_access_token=<token> \
+TF_VAR_multicdn_demo_secret=<secret> \
+TF_VAR_cloudflare_verify_token=<token> \
+terraform apply
 ```
 
 ### Manual steps required after standup

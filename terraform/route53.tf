@@ -36,7 +36,7 @@ resource "aws_route53_record" "cloudflare_verify" {
   name    = "cloudflare-verify.sherron-cloud.com"
   type    = "TXT"
   ttl     = 300
-  records = ["REDACTED_CLOUDFLARE_TOKEN"]
+  records = [var.cloudflare_verify_token]
 }
 
 # images.sherron-cloud.com → Cloudflare CDN
