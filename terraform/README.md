@@ -65,67 +65,52 @@ After a clean import the plan should show **no changes**. You can then remove
 
 ## Tear down
 
-Destroys all managed resources. DNS will stop resolving, the site goes dark.
+Two modes — **partial is recommended** for routine cost saving.
+
+### Partial (recommended)
+
+Destroys only WAF and Amplify (the resources that cost money). Leaves
+CloudFront, ACM, and Route53 running. Standup is fully automated with no
+manual DNS steps.
 
 ```bash
 cd terraform
-terraform destroy
+./scripts/teardown-partial.sh
 ```
 
-Terraform will print a list of everything it will delete and ask for
-confirmation before touching anything.
+### Full
 
-> **Warning — Route53 nameservers**: Destroying the hosted zone means AWS will
-> assign different nameservers when you recreate it. You'll need to update them
-> at the registrar before DNS works again. See step 4 in the standup section.
+Destroys everything. Use only if you want to completely eliminate the
+infrastructure. Standup will require manual Cloudflare and possibly registrar
+steps, and Route53 nameservers may change.
+
+```bash
+cd terraform
+./scripts/teardown-full.sh
+```
 
 ---
 
 ## Stand back up
 
-Recreates everything from scratch.
+### Partial (after a partial teardown)
+
+Fully automated — no manual steps required.
 
 ```bash
 cd terraform
-terraform apply
+./scripts/standup-partial.sh
 ```
 
-### Manual steps required after standup
+### Full (after a full teardown)
 
-These can't be automated via Terraform — do them after `apply` completes:
+```bash
+cd terraform
+./scripts/standup-full.sh
+```
 
-1. **ACM certificate validation**
-   The cert for `cloudfront-pool.demo.jsherron.com` needs a DNS validation
-   CNAME added in Cloudflare (`demo.jsherron.com` zone). Get the record to add:
-   ```bash
-   aws acm describe-certificate --region us-east-1 \
-     --certificate-arn $(terraform output -raw acm_certificate_arn) \
-     --query 'Certificate.DomainValidationOptions'
-   ```
-   Add the resulting CNAME in Cloudflare and wait a few minutes for the cert to issue.
-
-2. **Cloudflare DNS for cloudfront-pool**
-   Add or update the CNAME in Cloudflare (`demo.jsherron.com` zone):
-   ```
-   cloudfront-pool  CNAME  <value of: terraform output cloudfront_pool_domain>
-   ```
-
-3. **Amplify WAF re-association**
-   The WAF ACL can't be attached to Amplify via Terraform. Run after apply:
-   ```bash
-   aws amplify update-app \
-     --app-id $(terraform output -raw amplify_app_id) \
-     --waf-configuration webAclArn=$(terraform output -raw waf_web_acl_arn)
-   ```
-
-4. **Route53 nameservers** (only if the hosted zone was destroyed and recreated)
-   Check whether nameservers changed:
-   ```bash
-   terraform output route53_nameservers
-   ```
-   If they differ from what the registrar has, update them at:
-   AWS Console → Route53 → Registered domains → sherron-cloud.com → Name servers.
-   Allow up to 48h for propagation.
+The script prints the manual Cloudflare DNS and nameserver steps required
+after it completes.
 
 ---
 
