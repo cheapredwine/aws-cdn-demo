@@ -1,0 +1,8 @@
+# Copy this file to terraform.tfvars and fill in the real values.
+# terraform.tfvars is gitignored and must never be committed.
+#
+# Real values are stored in 1Password under "AWS CDN Demo — Terraform secrets"
+
+github_access_token     = "ghp_..."
+multicdn_demo_secret    = "XhYs..."
+cloudflare_verify_token = "97c2..."
