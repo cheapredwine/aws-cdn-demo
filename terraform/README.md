@@ -8,14 +8,39 @@ down to save money and stand it back up when needed.
 ## Prerequisites
 
 - [Terraform](https://developer.hashicorp.com/terraform/install) >= 1.5
-- AWS credentials with admin (or sufficiently broad) IAM permissions
+- AWS credentials for account `512629184821`
 - A GitHub personal access token with `repo` scope (for the Amplify app)
 
-Set credentials in your shell:
+---
+
+## Secrets
+
+All secrets are stored in 1Password under **"AWS CDN Demo — Terraform secrets"**.
+
+| 1Password field | Used for |
+|---|---|
+| `aws_access_key_id` | AWS authentication |
+| `aws_secret_access_key` | AWS authentication |
+| `github_access_token` | Amplify pulls from `cheapredwine/personal-website` |
+| `multicdn_demo_secret` | `X-Multicdn-Demo-Secret` header from CloudFront to R2 origin |
+| `cloudflare_verify_token` | Cloudflare domain ownership TXT record for `sherron-cloud.com` |
+
+### Setting up your local secrets file
+
+Copy the example file and fill in values from 1Password:
 
 ```bash
-export AWS_ACCESS_KEY_ID=...
-export AWS_SECRET_ACCESS_KEY=...
+cp terraform.tfvars.example terraform.tfvars
+# edit terraform.tfvars with values from 1Password
+```
+
+`terraform.tfvars` is gitignored and must never be committed.
+
+### Setting AWS credentials in your shell
+
+```bash
+export AWS_ACCESS_KEY_ID=...        # from 1Password
+export AWS_SECRET_ACCESS_KEY=...    # from 1Password
 export AWS_DEFAULT_REGION=us-west-2
 ```
 
@@ -29,14 +54,7 @@ management, run the import once:
 ```bash
 cd terraform
 terraform init
-TF_VAR_github_access_token=<token> \
-TF_VAR_multicdn_demo_secret=<secret> \
-TF_VAR_cloudflare_verify_token=<token> \
 terraform plan   # preview — should show imports, no changes
-
-TF_VAR_github_access_token=<token> \
-TF_VAR_multicdn_demo_secret=<secret> \
-TF_VAR_cloudflare_verify_token=<token> \
 terraform apply  # import into state
 ```
 
@@ -51,20 +69,15 @@ Destroys all managed resources. DNS will stop resolving, the site goes dark.
 
 ```bash
 cd terraform
-TF_VAR_github_access_token=<token> \
-TF_VAR_multicdn_demo_secret=<secret> \
-TF_VAR_cloudflare_verify_token=<token> \
 terraform destroy
 ```
 
 Terraform will print a list of everything it will delete and ask for
 confirmation before touching anything.
 
-> **Warning — Route53 nameservers**: If you destroy the hosted zone, AWS will
-> assign different nameservers when you recreate it. You'll need to update the
-> nameservers at your domain registrar (Route53 Registrar) before DNS works
-> again. The new values are printed in `output.route53_nameservers` after
-> standup.
+> **Warning — Route53 nameservers**: Destroying the hosted zone means AWS will
+> assign different nameservers when you recreate it. You'll need to update them
+> at the registrar before DNS works again. See step 4 in the standup section.
 
 ---
 
@@ -74,9 +87,6 @@ Recreates everything from scratch.
 
 ```bash
 cd terraform
-TF_VAR_github_access_token=<token> \
-TF_VAR_multicdn_demo_secret=<secret> \
-TF_VAR_cloudflare_verify_token=<token> \
 terraform apply
 ```
 
@@ -86,15 +96,13 @@ These can't be automated via Terraform — do them after `apply` completes:
 
 1. **ACM certificate validation**
    The cert for `cloudfront-pool.demo.jsherron.com` needs a DNS validation
-   CNAME added in Cloudflare (the `demo.jsherron.com` zone). Get the record:
+   CNAME added in Cloudflare (`demo.jsherron.com` zone). Get the record to add:
    ```bash
-   terraform output acm_certificate_arn
    aws acm describe-certificate --region us-east-1 \
-     --certificate-arn <arn> \
+     --certificate-arn $(terraform output -raw acm_certificate_arn) \
      --query 'Certificate.DomainValidationOptions'
    ```
-   Add the resulting CNAME in Cloudflare and wait for the cert to issue
-   (usually a few minutes).
+   Add the resulting CNAME in Cloudflare and wait a few minutes for the cert to issue.
 
 2. **Cloudflare DNS for cloudfront-pool**
    Add or update the CNAME in Cloudflare (`demo.jsherron.com` zone):
@@ -103,7 +111,7 @@ These can't be automated via Terraform — do them after `apply` completes:
    ```
 
 3. **Amplify WAF re-association**
-   The WAF ACL can't be attached to Amplify via Terraform. Run:
+   The WAF ACL can't be attached to Amplify via Terraform. Run after apply:
    ```bash
    aws amplify update-app \
      --app-id $(terraform output -raw amplify_app_id) \
@@ -115,8 +123,8 @@ These can't be automated via Terraform — do them after `apply` completes:
    ```bash
    terraform output route53_nameservers
    ```
-   If they differ from what your registrar has, update them at
-   Route53 Registrar → Registered domains → sherron-cloud.com → Name servers.
+   If they differ from what the registrar has, update them at:
+   AWS Console → Route53 → Registered domains → sherron-cloud.com → Name servers.
    Allow up to 48h for propagation.
 
 ---
@@ -124,6 +132,7 @@ These can't be automated via Terraform — do them after `apply` completes:
 ## Check what will happen without making changes
 
 ```bash
+cd terraform
 terraform plan
 ```
 
@@ -137,6 +146,6 @@ terraform plan
 | CloudFront distribution `cloudfront-pool.demo.jsherron.com` | `cloudfront.tf` |
 | WAFv2 Web ACL `allow_cloudflare` + IPv4/IPv6 IP sets | `waf.tf` |
 | ACM certificate `cloudfront-pool.demo.jsherron.com` | `acm.tf` |
-| Route53 hosted zone `sherron-cloud.com` + records | `route53.tf` |
+| Route53 hosted zone `sherron-cloud.com` + all DNS records | `route53.tf` |
 
 See `TODO.md` for resources not yet included.
