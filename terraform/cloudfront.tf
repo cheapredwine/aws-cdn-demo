@@ -1,9 +1,3 @@
-# TODO: CloudFront distribution E3BRD56Y886ZV5 (origin: jungledisk-s3.s3.amazonaws.com)
-# and its Origin Access Identity E36E2SR9XLZ98 are not managed here.
-# The origin S3 bucket (jungledisk-s3) no longer exists. Decide whether to
-# delete this distribution entirely or restore it with a new bucket before
-# adding it to Terraform.
-
 resource "aws_cloudfront_distribution" "cloudfront_pool" {
   comment = "Multi-CDN demo CloudFront distribution"
 
