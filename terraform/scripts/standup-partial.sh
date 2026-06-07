@@ -45,10 +45,10 @@ echo "==> Attaching WAF to Amplify..."
 APP_ID=$(terraform output -raw amplify_app_id)
 WAF_ARN=$(terraform output -raw waf_web_acl_arn)
 
-aws amplify update-app \
-  --region us-west-2 \
-  --app-id "$APP_ID" \
-  --waf-configuration webAclArn="$WAF_ARN"
+aws wafv2 associate-web-acl \
+  --web-acl-arn "$WAF_ARN" \
+  --resource-arn "arn:aws:amplify:us-west-2:512629184821:apps/$APP_ID" \
+  --region us-east-1
 
 # Verify WAF association
 STATUS=$(aws amplify get-app \
@@ -74,6 +74,12 @@ echo ""
 echo "==> Standup complete. Site is deploying."
 echo "    Monitor build progress:"
 echo "    https://us-west-2.console.aws.amazon.com/amplify/apps/$APP_ID"
+echo ""
+echo "!!! MANUAL STEP REQUIRED !!!"
+echo "Update Cloudflare origin configuration for sherron-cloud.com subdomains:"
+echo "  New Amplify CloudFront domain: $(terraform output -raw amplify_default_domain 2>/dev/null || echo 'unknown')"
+echo "  In Cloudflare dashboard, update origin to point to this domain."
+echo "  Without this, images/CSS will fail with Error 1016."
 echo ""
 echo "    Outputs:"
 terraform output

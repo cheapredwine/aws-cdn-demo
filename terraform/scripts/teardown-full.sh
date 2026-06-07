@@ -30,10 +30,12 @@ fi
 echo "==> Removing WAF association from Amplify before destroying WAF..."
 APP_ID=$(terraform output -raw amplify_app_id 2>/dev/null || true)
 if [ -n "$APP_ID" ]; then
-  aws amplify update-app \
-    --region us-west-2 \
-    --app-id "$APP_ID" \
-    --waf-configuration '{}' 2>/dev/null || true
+  WAF_ARN=$(terraform output -raw waf_web_acl_arn 2>/dev/null || true)
+  if [ -n "$WAF_ARN" ]; then
+    aws wafv2 disassociate-web-acl \
+      --resource-arn "arn:aws:amplify:us-west-2:512629184821:apps/$APP_ID" \
+      --region us-east-1 2>/dev/null || true
+  fi
 fi
 
 terraform destroy -auto-approve

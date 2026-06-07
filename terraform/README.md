@@ -36,30 +36,31 @@ cp terraform.tfvars.example terraform.tfvars
 
 `terraform.tfvars` is gitignored and must never be committed.
 
+**Important**: Do NOT add `aws_access_key_id` or `aws_secret_access_key` to `terraform.tfvars`. AWS credentials should only be set via environment variables or AWS CLI configuration.
+
 ### Setting AWS credentials in your shell
 
 ```bash
-export AWS_ACCESS_KEY_ID=...        # from 1Password
-export AWS_SECRET_ACCESS_KEY=...    # from 1Password
+export AWS_ACCESS_KEY_ID=...        # from 1Password or AWS CLI
+export AWS_SECRET_ACCESS_KEY=...    # from 1Password or AWS CLI  
 export AWS_DEFAULT_REGION=us-west-2
 ```
 
+Or use AWS CLI profiles configured via AWS Toolkit.
+
 ---
 
-## First-time setup (import existing state)
+## First-time setup
 
-If resources already exist in AWS and you need to bring them under Terraform
-management, run the import once:
+If starting fresh or after cloning the repo:
 
 ```bash
 cd terraform
 terraform init
-terraform plan   # preview — should show imports, no changes
-terraform apply  # import into state
+terraform plan   # should show "No changes" if state already imported
 ```
 
-After a clean import the plan should show **no changes**. You can then remove
-`imports.tf` or leave it in place (it's safe to keep).
+Note: `imports.tf` was used for initial state import and has been removed after successful import.
 
 ---
 
@@ -95,12 +96,15 @@ cd terraform
 
 ### Partial (after a partial teardown)
 
-Fully automated — no manual steps required.
-
 ```bash
 cd terraform
 ./scripts/standup-partial.sh
 ```
+
+**Important**: After standup completes, you must update Cloudflare origin configuration:
+1. Get new Amplify CloudFront domain: `terraform output -raw amplify_default_domain`
+2. In Cloudflare dashboard, update origin for `sherron-cloud.com` subdomains to point to the new domain
+3. Without this step, images and CSS will fail to load (Error 1016)
 
 ### Full (after a full teardown)
 

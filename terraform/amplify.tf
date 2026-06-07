@@ -31,9 +31,9 @@ resource "aws_amplify_app" "personal_website" {
     type = "AMPLIFY_MANAGED_NO_COOKIES"
   }
 
-  # NOTE: WAF association (allow_cloudflare web ACL) is not yet supported as a
-  # first-class Terraform attribute on aws_amplify_app. After standup, re-attach
-  # the WAF ACL via the AWS console or CLI:
+  # NOTE: WAF association must be managed via AWS CLI, not supported in Terraform
+  # aws_amplify_app resource as of AWS provider 5.x. Standup scripts handle this
+  # automatically via:
   #   aws amplify update-app --app-id <id> \
   #     --waf-configuration webAclArn=<waf_acl_arn>
 }

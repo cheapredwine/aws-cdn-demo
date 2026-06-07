@@ -8,6 +8,16 @@ resource "aws_route53_zone" "sherron_cloud" {
   comment = "HostedZone created by Route53 Registrar"
 }
 
+locals {
+  # Parse Amplify's internal CloudFront domain from domain association
+  # Find root subdomain (prefix == null or empty), dns_record format: "* CNAME d2wdz403fe8z37.cloudfront.net"
+  # Extract the CloudFront domain (3rd space-separated token)
+  amplify_root_subdomain = [
+    for s in aws_amplify_domain_association.sherron_cloud.sub_domain : s if try(s.prefix, "") == ""
+  ][0]
+  amplify_cloudfront_domain = split(" ", local.amplify_root_subdomain.dns_record)[2]
+}
+
 # Root apex → Amplify (Amplify manages this CloudFront distribution internally)
 resource "aws_route53_record" "root_a" {
   zone_id = aws_route53_zone.sherron_cloud.zone_id
@@ -15,19 +25,10 @@ resource "aws_route53_record" "root_a" {
   type    = "A"
 
   alias {
-    name                   = "d2wdz403fe8z37.cloudfront.net"
+    name                   = local.amplify_cloudfront_domain
     zone_id                = "Z2FDTNDATAQYW2" # CloudFront hosted zone ID (constant)
     evaluate_target_health = false
   }
-}
-
-# ACM validation record for Amplify's managed certificate
-resource "aws_route53_record" "acm_validation" {
-  zone_id = aws_route53_zone.sherron_cloud.zone_id
-  name    = "_80b2b3bba1f2353136322d5adf8a049a.sherron-cloud.com"
-  type    = "CNAME"
-  ttl     = 500
-  records = ["_0438026fcb23224f61286fa145e97478.jkddzztszm.acm-validations.aws."]
 }
 
 # Cloudflare domain ownership verification

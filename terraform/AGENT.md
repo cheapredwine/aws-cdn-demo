@@ -20,7 +20,7 @@ down (save money) or stand them back up (restore service).
 Destroys and recreates only the resources that cost money: **WAF and Amplify**.
 Leaves CloudFront, ACM, and Route53 running (they are effectively free idle).
 
-- Standup is fully automated — no manual DNS or Cloudflare steps
+- Standup requires one manual step: updating Cloudflare origin configuration
 - Takes ~3 minutes each way
 - Saves the bulk of the cost
 
@@ -51,6 +51,9 @@ Required fields:
 - `github_access_token` — GitHub PAT with `repo` scope
 - `multicdn_demo_secret` — CloudFront-to-R2 origin secret header value
 - `cloudflare_verify_token` — Cloudflare domain ownership TXT value
+
+**CRITICAL**: Do NOT add `aws_access_key_id` or `aws_secret_access_key` to this file.
+AWS credentials must only be set via environment variables.
 
 If the file is missing or incomplete, ask the user for the values from
 1Password ("AWS CDN Demo — Terraform secrets"), then write the file:
@@ -128,8 +131,27 @@ The script will:
 2. Automatically re-attach the WAF ACL to the Amplify app
 3. Trigger an Amplify deployment to redeploy the site
 
-No manual steps required. When the script exits, monitor the Amplify build
-at the URL it prints. The site is live once the build succeeds (~2 minutes).
+### Manual step required after partial standup
+
+**Cloudflare origin update** (CRITICAL — site will fail without this):
+
+When Amplify is recreated, its CloudFront distribution domain changes. You must
+update the Cloudflare origin configuration:
+
+1. Get the new Amplify CloudFront domain:
+   ```bash
+   cd terraform && terraform output -raw amplify_default_domain
+   ```
+   
+2. In the Cloudflare dashboard for `sherron-cloud.com`:
+   - Navigate to DNS → Origin settings
+   - Update the origin to point to the new CloudFront domain
+   - Example: `dyswkzz22dlcy.cloudfront.net`
+
+3. Without this step, images and CSS will fail with Error 1016 (Origin DNS Error)
+
+When the script exits, monitor the Amplify build at the URL it prints.
+The site is live once the build succeeds AND Cloudflare origin is updated (~2-3 minutes).
 
 ---
 
@@ -161,7 +183,24 @@ cd terraform
 
 The script will print the exact values needed. Work through these in order:
 
-**1. ACM certificate validation**
+**1. Cloudflare origin update** (CRITICAL — site will fail without this):
+
+When Amplify is recreated, its CloudFront distribution domain changes. You must
+update the Cloudflare origin configuration:
+
+1. Get the new Amplify CloudFront domain:
+   ```bash
+   cd terraform && terraform output -raw amplify_default_domain
+   ```
+   
+2. In the Cloudflare dashboard for `sherron-cloud.com`:
+   - Navigate to DNS → Origin settings
+   - Update the origin to point to the new CloudFront domain
+   - Example: `dyswkzz22dlcy.cloudfront.net`
+
+3. Without this step, images and CSS will fail with Error 1016 (Origin DNS Error)
+
+**2. ACM certificate validation**
 Add the CNAME printed by the script to Cloudflare (`demo.jsherron.com` zone).
 Poll until the cert is issued before telling the user standup is complete:
 
@@ -171,14 +210,14 @@ watch -n 15 aws acm describe-certificate --region us-east-1 \
   --query 'Certificate.Status'
 ```
 
-**2. Cloudflare DNS**
+**3. Cloudflare DNS**
 Add or update the CNAME printed by the script in Cloudflare (`demo.jsherron.com` zone):
 ```
 cloudfront-pool  CNAME  <cloudfront_pool_domain output>
 ```
 Ask the user to confirm when done — you cannot verify this automatically.
 
-**3. Route53 nameservers**
+**4. Route53 nameservers**
 Compare the nameservers in the output to what's at the registrar.
 If they differ, tell the user to update them at:
 AWS Console → Route53 → Registered domains → sherron-cloud.com → Name servers.
