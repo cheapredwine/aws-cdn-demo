@@ -102,7 +102,8 @@ cd terraform
 ```
 
 **Important**: After standup completes, you must update Cloudflare origin configuration:
-1. Get new Amplify CloudFront domain: `terraform output -raw amplify_default_domain`
+1. The standup script prints the new Amplify CloudFront domain (e.g., `d17y2y56ol3gr0.cloudfront.net`)
+   - Note: Use the `.cloudfront.net` domain, NOT the `.amplifyapp.com` domain
 2. In Cloudflare dashboard, update origin for `sherron-cloud.com` subdomains to point to the new domain
 3. Without this step, images and CSS will fail to load (Error 1016)
 

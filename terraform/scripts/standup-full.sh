@@ -63,6 +63,36 @@ echo "3. Route53 nameservers — check if these match your registrar:"
 terraform output route53_nameservers
 echo "   If not, update at: Route53 > Registered domains > sherron-cloud.com"
 echo ""
+echo "==> Restoring Cloudflare CNAME records (Amplify overwrites these)..."
+ZONE_ID=$(terraform output -raw route53_zone_id)
+
+# Amplify domain association creates CNAMEs pointing directly to CloudFront,
+# bypassing Cloudflare. Restore them to route through Cloudflare CDN so WAF
+# sees Cloudflare IPs instead of client IPs.
+aws route53 change-resource-record-sets --hosted-zone-id "$ZONE_ID" --change-batch '{
+  "Changes": [
+    {
+      "Action": "UPSERT",
+      "ResourceRecordSet": {
+        "Name": "images.sherron-cloud.com",
+        "Type": "CNAME",
+        "TTL": 60,
+        "ResourceRecords": [{"Value": "images.sherron-cloud.com.cdn.cloudflare.net"}]
+      }
+    },
+    {
+      "Action": "UPSERT",
+      "ResourceRecordSet": {
+        "Name": "www.sherron-cloud.com",
+        "Type": "CNAME",
+        "TTL": 60,
+        "ResourceRecords": [{"Value": "www.sherron-cloud.com.cdn.cloudflare.net"}]
+      }
+    }
+  ]
+}'
+
+echo ""
 echo "==> Triggering Amplify deployment (will succeed once domain/cert are valid)..."
 aws amplify start-job \
   --region us-west-2 \
@@ -73,8 +103,17 @@ aws amplify start-job \
 echo ""
 echo "!!! MANUAL STEP REQUIRED !!!"
 echo "Update Cloudflare origin configuration for sherron-cloud.com subdomains:"
-echo "  New Amplify CloudFront domain: $(terraform output -raw amplify_default_domain 2>/dev/null || echo 'unknown')"
+AMPLIFY_CF_DOMAIN=$(aws amplify get-domain-association \
+  --app-id "$APP_ID" \
+  --domain-name sherron-cloud.com \
+  --region us-west-2 \
+  --query 'domainAssociation.subDomains[0].dnsRecord' \
+  --output text 2>/dev/null | awk '{print $NF}')
+echo "  New Amplify CloudFront domain: ${AMPLIFY_CF_DOMAIN:-unknown}"
 echo "  In Cloudflare dashboard, update origin to point to this domain."
 echo "  Without this, images/CSS will fail with Error 1016."
+echo ""
+echo "NOTE: Route53 CNAMEs for images/www have been restored to route through"
+echo "      Cloudflare CDN. This ensures WAF sees Cloudflare IPs, not client IPs."
 echo ""
 echo "    Monitor build: https://us-west-2.console.aws.amazon.com/amplify/apps/$APP_ID"

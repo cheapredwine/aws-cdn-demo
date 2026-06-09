@@ -138,15 +138,18 @@ The script will:
 When Amplify is recreated, its CloudFront distribution domain changes. You must
 update the Cloudflare origin configuration:
 
-1. Get the new Amplify CloudFront domain:
+1. Get the new Amplify CloudFront domain (the standup script prints this):
    ```bash
-   cd terraform && terraform output -raw amplify_default_domain
+   aws amplify get-domain-association --app-id $(terraform output -raw amplify_app_id) \
+     --domain-name sherron-cloud.com --region us-west-2 \
+     --query 'domainAssociation.subDomains[0].dnsRecord' --output text | awk '{print $NF}'
    ```
+   **IMPORTANT**: Use the `.cloudfront.net` domain, NOT the `.amplifyapp.com` domain.
    
 2. In the Cloudflare dashboard for `sherron-cloud.com`:
    - Navigate to DNS → Origin settings
    - Update the origin to point to the new CloudFront domain
-   - Example: `dyswkzz22dlcy.cloudfront.net`
+   - Example: `d17y2y56ol3gr0.cloudfront.net`
 
 3. Without this step, images and CSS will fail with Error 1016 (Origin DNS Error)
 
@@ -188,15 +191,18 @@ The script will print the exact values needed. Work through these in order:
 When Amplify is recreated, its CloudFront distribution domain changes. You must
 update the Cloudflare origin configuration:
 
-1. Get the new Amplify CloudFront domain:
+1. Get the new Amplify CloudFront domain (the standup script prints this):
    ```bash
-   cd terraform && terraform output -raw amplify_default_domain
+   aws amplify get-domain-association --app-id $(terraform output -raw amplify_app_id) \
+     --domain-name sherron-cloud.com --region us-west-2 \
+     --query 'domainAssociation.subDomains[0].dnsRecord' --output text | awk '{print $NF}'
    ```
+   **IMPORTANT**: Use the `.cloudfront.net` domain, NOT the `.amplifyapp.com` domain.
    
 2. In the Cloudflare dashboard for `sherron-cloud.com`:
    - Navigate to DNS → Origin settings
    - Update the origin to point to the new CloudFront domain
-   - Example: `dyswkzz22dlcy.cloudfront.net`
+   - Example: `d17y2y56ol3gr0.cloudfront.net`
 
 3. Without this step, images and CSS will fail with Error 1016 (Origin DNS Error)
 

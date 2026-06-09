@@ -5,8 +5,13 @@
 When Amplify is destroyed and recreated (partial or full teardown), the CloudFront distribution domain changes. **CRITICAL**: Update Cloudflare origin configuration.
 
 - **Cloudflare Origin for sherron-cloud.com**: Update origin to new Amplify CloudFront domain
-  - Get new domain: `terraform output amplify_default_domain` (e.g., `d2spmcz01vlrw1.amplifyapp.com`)
-  - Or use CloudFront domain from Amplify subdomain: `dyswkzz22dlcy.cloudfront.net`
+  - Get new domain from standup script output, or run:
+    ```bash
+    aws amplify get-domain-association --app-id $(terraform output -raw amplify_app_id) \
+      --domain-name sherron-cloud.com --region us-west-2 \
+      --query 'domainAssociation.subDomains[0].dnsRecord' --output text | awk '{print $NF}'
+    ```
+  - Example: `d17y2y56ol3gr0.cloudfront.net` (NOT the `.amplifyapp.com` domain)
   - Update Cloudflare dashboard: DNS → sherron-cloud.com → Origin settings
   - Without this update, images/CSS will fail with Error 1016
 
@@ -26,3 +31,6 @@ These steps are only needed after running `./scripts/teardown-full.sh`.
 - ✅ Amplify WAF attachment (via `aws wafv2 associate-web-acl`)
 - ✅ Amplify deployment trigger (via `aws amplify start-job`)
 - ✅ Route53 root A record automatically updates to new Amplify CloudFront domain
+- ✅ Route53 CNAME restoration for images/www subdomains (Amplify overwrites these
+     to point directly to CloudFront, bypassing Cloudflare CDN and causing WAF
+     to see client IPs instead of Cloudflare IPs → 403 blocks)
