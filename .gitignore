@@ -8,3 +8,11 @@ terraform/.terraform.lock.hcl
 terraform/terraform.tfstate
 terraform/terraform.tfstate.backup
 .DS_Store
+
+# Security / build artifacts
+node_modules/
+dist/
+.env
+*.pem
+.wrangler/
+.dev.vars
