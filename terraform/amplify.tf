@@ -1,6 +1,6 @@
 resource "aws_amplify_app" "cf_cdn_aws_amplify" {
-  name       = "cf-cdn-aws-amplify"
-  repository = "https://github.com/cheapredwine/cf-cdn-aws-amplify"
+  name       = "aws-cf-cdn"
+  repository = "https://github.com/cheapredwine/aws-cf-cdn"
   platform   = "WEB"
 
   # GitHub token is required on create/update but not tracked in state after import.

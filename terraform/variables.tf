@@ -1,5 +1,5 @@
 variable "github_access_token" {
-  description = "GitHub personal access token used by Amplify to pull cheapredwine/cf-cdn-aws-amplify"
+  description = "GitHub personal access token used by Amplify to pull cheapredwine/aws-cf-cdn"
   type        = string
   sensitive   = true
 }

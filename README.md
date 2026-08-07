@@ -1,4 +1,4 @@
-# CF-CDN-AWS-Amplify
+# aws-cf-cdn
 
 A complete reference architecture demonstrating Cloudflare CDN in front of AWS infrastructure: Amplify static hosting → CloudFront distribution → AWS WAF origin lockdown → Cloudflare edge caching and security.
 
@@ -51,7 +51,7 @@ AWS Amplify (Origin)
 ## Project Structure
 
 ```
-cf-cdn-aws-amplify/
+aws-cf-cdn/
 ├── src/                    # Static site content
 │   ├── index.html          # Demo page
 │   ├── styles.css          # Styling
@@ -118,5 +118,7 @@ The `src/` directory contains a simple static demo site. Amplify deploys from `s
 
 - `personal-website` — Static site content and architecture docs
 - `aws-cdn-demo` — Terraform infrastructure and operational scripts
+
+Renamed from `cf-cdn-aws-amplify` to `aws-cf-cdn`.
 
 *Last updated: August 2026*

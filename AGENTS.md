@@ -1,4 +1,4 @@
-# Agent Instructions — CF-CDN-AWS-Amplify
+# Agent Instructions — aws-cf-cdn
 
 This repo contains both static site content and Terraform infrastructure. Quick reference for operating the demo.
 
