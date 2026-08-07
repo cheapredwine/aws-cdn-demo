@@ -1,6 +1,6 @@
-resource "aws_amplify_app" "personal_website" {
-  name       = "personal-website"
-  repository = "https://github.com/cheapredwine/personal-website"
+resource "aws_amplify_app" "cf_cdn_aws_amplify" {
+  name       = "cf-cdn-aws-amplify"
+  repository = "https://github.com/cheapredwine/cf-cdn-aws-amplify"
   platform   = "WEB"
 
   # GitHub token is required on create/update but not tracked in state after import.
@@ -20,7 +20,7 @@ resource "aws_amplify_app" "personal_website" {
         build:
           commands: []
       artifacts:
-        baseDirectory: /
+        baseDirectory: src
         files:
           - '**/*'
       cache:
@@ -39,7 +39,7 @@ resource "aws_amplify_app" "personal_website" {
 }
 
 resource "aws_amplify_branch" "main" {
-  app_id      = aws_amplify_app.personal_website.id
+  app_id      = aws_amplify_app.cf_cdn_aws_amplify.id
   branch_name = "main"
   stage       = "PRODUCTION"
   framework   = "Web"
@@ -53,7 +53,7 @@ resource "aws_amplify_branch" "main" {
 }
 
 resource "aws_amplify_domain_association" "sherron_cloud" {
-  app_id      = aws_amplify_app.personal_website.id
+  app_id      = aws_amplify_app.cf_cdn_aws_amplify.id
   domain_name = "sherron-cloud.com"
 
   enable_auto_sub_domain = false

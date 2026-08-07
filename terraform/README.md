@@ -21,7 +21,7 @@ All secrets are stored in 1Password under **"AWS CDN Demo — Terraform secrets"
 |---|---|
 | `aws_access_key_id` | AWS authentication |
 | `aws_secret_access_key` | AWS authentication |
-| `github_access_token` | Amplify pulls from `cheapredwine/personal-website` |
+| `github_access_token` | Amplify pulls from `cheapredwine/cf-cdn-aws-amplify` |
 | `multicdn_demo_secret` | `X-Multicdn-Demo-Secret` header from CloudFront to R2 origin |
 | `cloudflare_verify_token` | Cloudflare domain ownership TXT record for `sherron-cloud.com` |
 
@@ -132,7 +132,7 @@ terraform plan
 
 | Resource | Terraform file |
 |---|---|
-| Amplify app `personal-website` + `main` branch + `sherron-cloud.com` domain | `amplify.tf` |
+| Amplify app `cf-cdn-aws-amplify` + `main` branch + `sherron-cloud.com` domain | `amplify.tf` |
 | CloudFront distribution `cloudfront-pool.demo.jsherron.com` | `cloudfront.tf` |
 | WAFv2 Web ACL `allow_cloudflare` + IPv4/IPv6 IP sets | `waf.tf` |
 | ACM certificate `cloudfront-pool.demo.jsherron.com` | `acm.tf` |

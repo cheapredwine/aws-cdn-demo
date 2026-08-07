@@ -1,9 +1,9 @@
 output "amplify_app_id" {
-  value = aws_amplify_app.personal_website.id
+  value = aws_amplify_app.cf_cdn_aws_amplify.id
 }
 
 output "amplify_default_domain" {
-  value = aws_amplify_app.personal_website.default_domain
+  value = aws_amplify_app.cf_cdn_aws_amplify.default_domain
 }
 
 output "cloudfront_pool_domain" {
